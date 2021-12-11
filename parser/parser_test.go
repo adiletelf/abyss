@@ -48,7 +48,6 @@ func TestLetStatement(t *testing.T) {
 	}
 }
 
-
 func TestReturnStatement(t *testing.T) {
 	input := `
 return 5;
