@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/adiletelf/abyss/repl"
 	"os"
 	"os/user"
-	"github.com/adiletelf/abyss/repl"
 )
 
 func main() {
