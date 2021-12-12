@@ -115,6 +115,16 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
+// LITERALS
+type IntegerLiteral struct {
+	Token token.Token // the token.INT token
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode()      {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+
 type PrefixExpression struct {
 	Token    token.Token // the prefix token, e.g.: '!'
 	Operator string
@@ -134,12 +144,23 @@ func (pe *PrefixExpression) String() string {
 	return out.String()
 }
 
-// LITERALS
-type IntegerLiteral struct {
-	Token token.Token // the token.INT token
-	Value int64
+type InfixExpression struct {
+	Token    token.Token // The operator token, e.g.: '+', '*'
+	Left     Expression
+	Operator string
+	Right    Expression
 }
 
-func (il *IntegerLiteral) expressionNode()      {}
-func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+func (oe *InfixExpression) expressionNode()      {}
+func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
+func (oe *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(oe.Left.String())
+	out.WriteString(" " + oe.Operator + " ")
+	out.WriteString(oe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
