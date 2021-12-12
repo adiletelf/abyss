@@ -43,6 +43,8 @@ func (p *Program) String() string {
 	return out.String()
 }
 
+// STATEMENTS
+
 type LetStatement struct {
 	Token token.Token // the 'let' token
 	Name  *Identifier
@@ -102,6 +104,8 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
+// EXPRESSIONS
+
 type Identifier struct {
 	Token token.Token // the token.IDENT token
 	Value string
@@ -110,3 +114,13 @@ type Identifier struct {
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
+
+// LITERALS
+type IntegerLiteral struct {
+	Token token.Token // the token.INT token
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode()      {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
