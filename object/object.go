@@ -6,7 +6,7 @@ import (
 
 const (
 	NULL_OBJ    = "NULL"
-	INTEGET_OBJ = "INTEGER"
+	INTEGER_OBJ = "INTEGER"
 	BOOLEAN_OBJ = "BOOLEAN"
 )
 
@@ -26,7 +26,7 @@ type Integer struct {
 	Value int64
 }
 
-func (i *Integer) Type() ObjectType { return INTEGET_OBJ }
+func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
 
 type Boolean struct {
