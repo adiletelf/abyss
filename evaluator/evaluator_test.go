@@ -8,8 +8,8 @@ import (
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
-	tests := []struct{
-		input string
+	tests := []struct {
+		input    string
 		expected int64
 	}{
 		{"5", 5},
@@ -23,8 +23,8 @@ func TestEvalIntegerExpression(t *testing.T) {
 }
 
 func TestEvalBooleanExpression(t *testing.T) {
-	tests := []struct{
-		input string
+	tests := []struct {
+		input    string
 		expected bool
 	}{
 		{"true", true},
@@ -74,4 +74,3 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 
 	return true
 }
-

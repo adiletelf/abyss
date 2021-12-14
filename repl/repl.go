@@ -3,9 +3,9 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"github.com/adiletelf/abyss/evaluator"
 	"github.com/adiletelf/abyss/lexer"
 	"github.com/adiletelf/abyss/parser"
-	"github.com/adiletelf/abyss/evaluator"
 	"io"
 )
 
