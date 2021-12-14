@@ -2,21 +2,23 @@ package ast
 
 import (
 	"bytes"
-	"strings"
-
 	"github.com/adiletelf/abyss/token"
+	"strings"
 )
 
+// The base Node interface
 type Node interface {
 	TokenLiteral() string
 	String() string
 }
 
+// All statement nodes implement this
 type Statement interface {
 	Node
 	statementNode()
 }
 
+// All expression nodes implement this
 type Expression interface {
 	Node
 	expressionNode()
@@ -44,10 +46,9 @@ func (p *Program) String() string {
 	return out.String()
 }
 
-// STATEMENTS
-
+// Statements
 type LetStatement struct {
-	Token token.Token // the 'let' token
+	Token token.Token // the token.LET token
 	Name  *Identifier
 	Value Expression
 }
@@ -106,7 +107,7 @@ func (es *ExpressionStatement) String() string {
 }
 
 type BlockStatement struct {
-	Token      token.Token // the '{' token
+	Token      token.Token // the { token
 	Statements []Statement
 }
 
@@ -122,8 +123,7 @@ func (bs *BlockStatement) String() string {
 	return out.String()
 }
 
-// EXPRESSIONS
-
+// Expressions
 type Identifier struct {
 	Token token.Token // the token.IDENT token
 	Value string
@@ -133,9 +133,17 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
-// LITERALS
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) expressionNode()      {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
+
 type IntegerLiteral struct {
-	Token token.Token // the token.INT token
+	Token token.Token
 	Value int64
 }
 
@@ -143,13 +151,48 @@ func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
-type Boolean struct {
-	Token token.Token
-	Value bool
+type PrefixExpression struct {
+	Token    token.Token // The prefix token, e.g. !
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type InfixExpression struct {
+	Token    token.Token // The operator token, e.g. +
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (oe *InfixExpression) expressionNode()      {}
+func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
+func (oe *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(oe.Left.String())
+	out.WriteString(" " + oe.Operator + " ")
+	out.WriteString(oe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
 }
 
 type IfExpression struct {
-	Token       token.Token // the 'if' token
+	Token       token.Token // The 'if' token
 	Condition   Expression
 	Consequence *BlockStatement
 	Alternative *BlockStatement
@@ -174,7 +217,7 @@ func (ie *IfExpression) String() string {
 }
 
 type FunctionLiteral struct {
-	Token      token.Token // the 'fn' token
+	Token      token.Token // The 'fn' token
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
@@ -192,14 +235,14 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(fl.TokenLiteral())
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(")")
+	out.WriteString(") ")
 	out.WriteString(fl.Body.String())
 
 	return out.String()
 }
 
 type CallExpression struct {
-	Token     token.Token //the '(' token
+	Token     token.Token // The '(' token
 	Function  Expression  // Identifier or FunctionLiteral
 	Arguments []Expression
 }
@@ -217,50 +260,6 @@ func (ce *CallExpression) String() string {
 	out.WriteString(ce.Function.String())
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))
-	out.WriteString(")")
-
-	return out.String()
-}
-
-type PrefixExpression struct {
-	Token    token.Token // the prefix token, e.g.: '!'
-	Operator string
-	Right    Expression
-}
-
-func (b *Boolean) expressionNode()      {}
-func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
-func (b *Boolean) String() string       { return b.Token.Literal }
-
-func (pe *PrefixExpression) expressionNode()      {}
-func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
-func (pe *PrefixExpression) String() string {
-	var out bytes.Buffer
-
-	out.WriteString("(")
-	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
-	out.WriteString(")")
-
-	return out.String()
-}
-
-type InfixExpression struct {
-	Token    token.Token // The operator token, e.g.: '+', '*'
-	Left     Expression
-	Operator string
-	Right    Expression
-}
-
-func (oe *InfixExpression) expressionNode()      {}
-func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
-func (oe *InfixExpression) String() string {
-	var out bytes.Buffer
-
-	out.WriteString("(")
-	out.WriteString(oe.Left.String())
-	out.WriteString(" " + oe.Operator + " ")
-	out.WriteString(oe.Right.String())
 	out.WriteString(")")
 
 	return out.String()
