@@ -161,42 +161,44 @@ func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return sl.Token.Literal }
 
-type PrefixExpression struct {
-	Token    token.Token // The prefix token, e.g. !
-	Operator string
-	Right    Expression
+type ArrayLiteral struct {
+	Token    token.Token // the '[' token
+	Elements []Expression
 }
 
-func (pe *PrefixExpression) expressionNode()      {}
-func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
-func (pe *PrefixExpression) String() string {
+func (al *ArrayLiteral) expressionNode()      {}
+func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
+func (al *ArrayLiteral) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("(")
-	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
-	out.WriteString(")")
+	elements := []string{}
+	for _, el := range al.Elements {
+		elements = append(elements, el.String())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
 
 	return out.String()
 }
 
-type InfixExpression struct {
-	Token    token.Token // The operator token, e.g. +
-	Left     Expression
-	Operator string
-	Right    Expression
+type IndexExpression struct {
+	Token token.Token // the '[' token
+	Left  Expression
+	Index Expression
 }
 
-func (oe *InfixExpression) expressionNode()      {}
-func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
-func (oe *InfixExpression) String() string {
+func (ie *IndexExpression) expressionNode()      {}
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IndexExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(oe.Left.String())
-	out.WriteString(" " + oe.Operator + " ")
-	out.WriteString(oe.Right.String())
-	out.WriteString(")")
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("])")
 
 	return out.String()
 }
@@ -270,6 +272,46 @@ func (ce *CallExpression) String() string {
 	out.WriteString(ce.Function.String())
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type PrefixExpression struct {
+	Token    token.Token // The prefix token, e.g. !
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type InfixExpression struct {
+	Token    token.Token // The operator token, e.g. +
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (oe *InfixExpression) expressionNode()      {}
+func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
+func (oe *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(oe.Left.String())
+	out.WriteString(" " + oe.Operator + " ")
+	out.WriteString(oe.Right.String())
 	out.WriteString(")")
 
 	return out.String()
