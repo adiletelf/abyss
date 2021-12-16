@@ -1,10 +1,12 @@
 package evaluator
 
 import (
+	"testing"
+
 	"github.com/adiletelf/abyss/lexer"
 	"github.com/adiletelf/abyss/object"
 	"github.com/adiletelf/abyss/parser"
-	"testing"
+	"golang.org/x/tools/go/expect"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -255,6 +257,19 @@ func TestClosures(t *testing.T) {
 	`
 
 	testIntegerObject(t, testEval(input), 4)
+}
+
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct{
+		input string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+		{`len(1)`, 0},
+		{`len("")`, 0},
+	}
 }
 
 func testEval(input string) object.Object {
