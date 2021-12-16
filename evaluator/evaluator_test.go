@@ -138,7 +138,7 @@ func TestReturnStatements(t *testing.T) {
 
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
-		input    string
+		input           string
 		expectedMessage string
 	}{
 		{"5 + true;", "type mismatch: INTEGER + BOOLEAN"},
@@ -157,6 +157,7 @@ func TestErrorHandling(t *testing.T) {
 			}
 			`, "unknown operator: BOOLEAN + BOOLEAN",
 		},
+		{"foobar", "identifier not found: foobar"},
 	}
 
 	for _, tt := range tests {
@@ -178,8 +179,9 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	env := object.NewEnvironment()
 
-	return Eval(program)
+	return Eval(program, env)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {

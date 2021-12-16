@@ -2,8 +2,9 @@ package ast
 
 import (
 	"bytes"
-	"github.com/adiletelf/abyss/token"
 	"strings"
+
+	"github.com/adiletelf/abyss/token"
 )
 
 // The base Node interface
