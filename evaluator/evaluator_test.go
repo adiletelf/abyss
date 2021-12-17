@@ -221,7 +221,7 @@ func TestErrorHandling(t *testing.T) {
 		{"-true", "unknown operator: -BOOLEAN"},
 		{"true + false", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"5; true + false; 5;", "unknown operator: BOOLEAN + BOOLEAN"},
-		{"if (10 > 1 { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{
 			`
 			if (10 > 1) {
@@ -244,7 +244,7 @@ func TestErrorHandling(t *testing.T) {
 
 		errObj, ok := evaluated.(*object.Error)
 		if !ok {
-			t.Errorf("no error object returned, got=%T (%+v)", evaluated, evaluated)
+			t.Errorf("no error object returned, got=%T (%+v), input=%q", evaluated, evaluated, tt.input)
 			continue
 		}
 
