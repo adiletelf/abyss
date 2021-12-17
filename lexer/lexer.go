@@ -1,6 +1,9 @@
 package lexer
 
-import "github.com/adiletelf/abyss/token"
+import (
+	"github.com/adiletelf/abyss/token"
+	"strings"
+)
 
 type Lexer struct {
 	input        string
@@ -89,8 +92,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if isDigit(l.ch) {
-			tok.Type = token.INT
-			tok.Literal = l.readNumber()
+			tok = l.readDecimal()
 			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
@@ -107,6 +109,32 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+func (l *Lexer) readDecimal() token.Token {
+	integer := l.readNumber()
+
+	if string(l.ch) == "." && isDigit(l.peekChar()) {
+		// OK here we think we've got a float.
+		l.readChar()
+		fraction := l.readNumber()
+		return token.Token{Type: token.FLOAT, Literal: integer + "." + fraction}
+	}
+
+	return token.Token{Type: token.INT, Literal: integer}
+}
+
+func (l *Lexer) readNumber() string {
+	str := ""
+
+	// We usually just accept digits.
+	accept := "0123456789"
+
+	for strings.Contains(accept, string(l.ch)) {
+		str += string(l.ch)
+		l.readChar()
+	}
+	return str
+}
+
 func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
@@ -114,14 +142,6 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 func (l *Lexer) readIdentifier() string {
 	position := l.position
 	for isLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func (l *Lexer) readNumber() string {
-	position := l.position
-	for isDigit(l.ch) {
 		l.readChar()
 	}
 	return l.input[position:l.position]
