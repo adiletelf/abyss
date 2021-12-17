@@ -13,12 +13,14 @@ const (
 	STRING = "STRING"
 
 	// Operators
-	ASSIGN   = "="
-	PLUS     = "+"
-	MINUS    = "-"
-	ASTERISK = "*"
-	SLASH    = "/"
-	BANG     = "!"
+	ASSIGN       = "="
+	PLUS         = "+"
+	PLUS_EQUALS  = "+="
+	MINUS        = "-"
+	MINUS_EQUALS = "-="
+	ASTERISK     = "*"
+	SLASH        = "/"
+	BANG         = "!"
 
 	LT = "<"
 	GT = ">"

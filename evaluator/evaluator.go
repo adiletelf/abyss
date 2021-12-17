@@ -40,6 +40,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		env.Set(node.Name.Value, val)
 
+	case *ast.AssignStatement:
+		return evalAssignStatement(node, env)
 	// Expressions
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
@@ -148,6 +150,84 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	return result
 }
 
+func evalAssignStatement(a *ast.AssignStatement, env *object.Environment) (val object.Object) {
+	evaluated := Eval(a.Value, env)
+	if isError(evaluated) {
+		return evaluated
+	}
+
+	//
+	// An assignment is generally:
+	//
+	//    variable = value
+	//
+	// But we cheat and reuse the implementation for:
+	//
+	//    i += 4
+	//
+	// In this case we record the "operator" as "+="
+	//
+	switch a.Operator {
+	case "+=":
+		// Get the current value
+		current, ok := env.Get(a.Name.String())
+		if !ok {
+			return newError("%s is unknown", a.Name.String())
+		}
+
+		res := evalInfixExpression("+=", current, evaluated)
+		if isError(res) {
+			fmt.Printf("Error handling += %s\n", res.Inspect())
+			return res
+		}
+
+		env.Set(a.Name.String(), res)
+		return res
+
+	case "-=":
+
+		// Get the current value
+		current, ok := env.Get(a.Name.String())
+		if !ok {
+			return newError("%s is unknown", a.Name.String())
+		}
+
+		res := evalInfixExpression("-=", current, evaluated)
+		if isError(res) {
+			fmt.Printf("Error handling -= %s\n", res.Inspect())
+			return res
+		}
+
+		env.Set(a.Name.String(), res)
+		return res
+
+	case "*=":
+		// Get the current value
+		current, ok := env.Get(a.Name.String())
+		if !ok {
+			return newError("%s is unknown", a.Name.String())
+		}
+
+		res := evalInfixExpression("*=", current, evaluated)
+		if isError(res) {
+			fmt.Printf("Error handling *= %s\n", res.Inspect())
+			return res
+		}
+
+		env.Set(a.Name.String(), res)
+		return res
+
+	case "=":
+		_, ok := env.Get(a.Name.String())
+		if !ok {
+			return newError("Setting unknown variable '%s'", a.Name.String())
+		}
+
+		env.Set(a.Name.String(), evaluated)
+	}
+	return evaluated
+}
+
 func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
 	var result object.Object
 
@@ -180,6 +260,8 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalIntegerFloatInfixExpression(operator, left, right)
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(operator, left, right)
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
@@ -237,16 +319,28 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	switch operator {
 	case "+":
 		return &object.Integer{Value: leftVal + rightVal}
+	case "+=":
+		return &object.Integer{Value: leftVal + rightVal}
 	case "-":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "-=":
 		return &object.Integer{Value: leftVal - rightVal}
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
+	case "*=":
+		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
+		return &object.Integer{Value: leftVal / rightVal}
+	case "/=":
 		return &object.Integer{Value: leftVal / rightVal}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case "<=":
+		return nativeBoolToBooleanObject(leftVal <= rightVal)
 	case ">":
 		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case ">=":
+		return nativeBoolToBooleanObject(leftVal >= rightVal)
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
@@ -256,21 +350,71 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	}
 }
 
+func evalIntegerFloatInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := float64(left.(*object.Integer).Value)
+	rightVal := right.(*object.Float).Value
+	switch operator {
+	case "+":
+		return &object.Float{Value: leftVal + rightVal}
+	case "+=":
+		return &object.Float{Value: leftVal + rightVal}
+	case "-":
+		return &object.Float{Value: leftVal - rightVal}
+	case "-=":
+		return &object.Float{Value: leftVal - rightVal}
+	case "*":
+		return &object.Float{Value: leftVal * rightVal}
+	case "*=":
+		return &object.Float{Value: leftVal * rightVal}
+	case "/":
+		return &object.Float{Value: leftVal / rightVal}
+	case "/=":
+		return &object.Float{Value: leftVal / rightVal}
+	case "<":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case "<=":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case ">=":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
+
 func evalFloatInfixExpression(operator string, left, right object.Object) object.Object {
 	leftVal := left.(*object.Float).Value
 	rightVal := right.(*object.Float).Value
 	switch operator {
 	case "+":
 		return &object.Float{Value: leftVal + rightVal}
+	case "+=":
+		return &object.Float{Value: leftVal + rightVal}
 	case "-":
+		return &object.Float{Value: leftVal - rightVal}
+	case "-=":
 		return &object.Float{Value: leftVal - rightVal}
 	case "*":
 		return &object.Float{Value: leftVal * rightVal}
+	case "*=":
+		return &object.Float{Value: leftVal * rightVal}
 	case "/":
+		return &object.Float{Value: leftVal / rightVal}
+	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case "<=":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case ">=":
 		return nativeBoolToBooleanObject(leftVal > rightVal)
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
@@ -288,15 +432,27 @@ func evalFloatIntegerInfixExpression(operator string, left, right object.Object)
 	switch operator {
 	case "+":
 		return &object.Float{Value: leftVal + rightVal}
+	case "+=":
+		return &object.Float{Value: leftVal + rightVal}
 	case "-":
+		return &object.Float{Value: leftVal - rightVal}
+	case "-=":
 		return &object.Float{Value: leftVal - rightVal}
 	case "*":
 		return &object.Float{Value: leftVal * rightVal}
+	case "*=":
+		return &object.Float{Value: leftVal * rightVal}
 	case "/":
+		return &object.Float{Value: leftVal / rightVal}
+	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case "<=":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case ">=":
 		return nativeBoolToBooleanObject(leftVal > rightVal)
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)

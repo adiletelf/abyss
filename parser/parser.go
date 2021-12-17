@@ -11,6 +11,7 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	ASSIGN      // =
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -21,16 +22,19 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQ:       EQUALS,
-	token.NOT_EQ:   EQUALS,
-	token.LT:       LESSGREATER,
-	token.GT:       LESSGREATER,
-	token.PLUS:     SUM,
-	token.MINUS:    SUM,
-	token.SLASH:    PRODUCT,
-	token.ASTERISK: PRODUCT,
-	token.LPAREN:   CALL,
-	token.LBRACKET: INDEX,
+	token.ASSIGN:       ASSIGN,
+	token.EQ:           EQUALS,
+	token.NOT_EQ:       EQUALS,
+	token.LT:           LESSGREATER,
+	token.GT:           LESSGREATER,
+	token.PLUS:         SUM,
+	token.PLUS_EQUALS:  SUM,
+	token.MINUS:        SUM,
+	token.MINUS_EQUALS: SUM,
+	token.SLASH:        PRODUCT,
+	token.ASTERISK:     PRODUCT,
+	token.LPAREN:       CALL,
+	token.LBRACKET:     INDEX,
 }
 
 type (
@@ -72,8 +76,11 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
+	p.registerInfix(token.PLUS_EQUALS, p.parseAssignExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
+	p.registerInfix(token.MINUS_EQUALS, p.parseAssignExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.EQ, p.parseInfixExpression)
@@ -227,6 +234,42 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 
 	return leftExp
+}
+
+// parseAssignExpression parses a bare assignment, without a `let`.
+func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
+	stmt := &ast.AssignStatement{Token: p.curToken}
+	if n, ok := name.(*ast.Identifier); ok {
+		stmt.Name = n
+	} else {
+		msg := fmt.Sprintf("expected assign token to be IDENT, got %s instead", name.TokenLiteral())
+		p.errors = append(p.errors, msg)
+	}
+
+	oper := p.curToken
+	p.nextToken()
+
+	//
+	// An assignment is generally:
+	//
+	//    variable = value
+	//
+	// But we cheat and reuse the implementation for:
+	//
+	//    i += 4
+	//
+	// In this case we record the "operator" as "+="
+	//
+	switch oper.Type {
+	case token.PLUS_EQUALS:
+		stmt.Operator = "+="
+	case token.MINUS_EQUALS:
+		stmt.Operator = "-="
+	default:
+		stmt.Operator = "="
+	}
+	stmt.Value = p.parseExpression(LOWEST)
+	return stmt
 }
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
