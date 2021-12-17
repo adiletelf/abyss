@@ -81,6 +81,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
 
+	case *ast.ForLoopExpression:
+		return evalForLoopExpression(node, env)
+
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 
@@ -206,6 +209,25 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 	} else {
 		return NULL
 	}
+}
+
+func evalForLoopExpression(fle *ast.ForLoopExpression, env *object.Environment) object.Object {
+	rt := &object.Boolean{Value: true}
+	for {
+		condition := Eval(fle.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+		if isTruthy(condition) {
+			rt := Eval(fle.Consequence, env)
+			if !isError(rt) && (rt.Type() == object.RETURN_VALUE_OBJ || rt.Type() == object.ERROR_OBJ) {
+				return rt
+			}
+		} else {
+			break
+		}
+	}
+	return rt
 }
 
 func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
