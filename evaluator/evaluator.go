@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/adiletelf/abyss/ast"
 	"github.com/adiletelf/abyss/object"
@@ -39,6 +40,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return val
 		}
 		env.Set(node.Name.Value, val)
+		return val
 
 	case *ast.AssignStatement:
 		return evalAssignStatement(node, env)
@@ -54,6 +56,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+
+	case *ast.NullLiteral:
+		return NULL
 
 	case *ast.PrefixExpression:
 		right := Eval(node.Right, env)
@@ -217,6 +222,22 @@ func evalAssignStatement(a *ast.AssignStatement, env *object.Environment) (val o
 		env.Set(a.Name.String(), res)
 		return res
 
+	case "/=":
+		// Get the current value
+		current, ok := env.Get(a.Name.String())
+		if !ok {
+			return newError("%s is unknown", a.Name.String())
+		}
+
+		res := evalInfixExpression("/=", current, evaluated)
+		if isError(res) {
+			fmt.Printf("Error handling *= %s\n", res.Inspect())
+			return res
+		}
+
+		env.Set(a.Name.String(), res)
+		return res
+
 	case "=":
 		_, ok := env.Get(a.Name.String())
 		if !ok {
@@ -319,20 +340,22 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	switch operator {
 	case "+":
 		return &object.Integer{Value: leftVal + rightVal}
-	case "+=":
-		return &object.Integer{Value: leftVal + rightVal}
 	case "-":
-		return &object.Integer{Value: leftVal - rightVal}
-	case "-=":
 		return &object.Integer{Value: leftVal - rightVal}
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
-	case "*=":
-		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
 		return &object.Integer{Value: leftVal / rightVal}
+	case "+=":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-=":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "*=":
+		return &object.Integer{Value: leftVal * rightVal}
 	case "/=":
 		return &object.Integer{Value: leftVal / rightVal}
+	case "**":
+		return &object.Integer{Value: int64(math.Pow(float64(leftVal), float64(rightVal)))}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -345,6 +368,16 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
 		return nativeBoolToBooleanObject(leftVal != rightVal)
+	case "..":
+		len := int(rightVal-leftVal) + 1
+		array := make([]object.Object, len)
+		i := 0
+		for i < len {
+			array[i] = &object.Integer{Value: leftVal}
+			leftVal++
+			i++
+		}
+		return &object.Array{Elements: array}
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
@@ -370,6 +403,8 @@ func evalIntegerFloatInfixExpression(operator string, left, right object.Object)
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
+	case "**":
+		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -408,6 +443,8 @@ func evalFloatInfixExpression(operator string, left, right object.Object) object
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
+	case "**":
+		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -446,6 +483,8 @@ func evalFloatIntegerInfixExpression(operator string, left, right object.Object)
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
+	case "**":
+		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -465,13 +504,29 @@ func evalFloatIntegerInfixExpression(operator string, left, right object.Object)
 }
 
 func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
-	if operator != "+" {
+	l := left.(*object.String)
+	r := left.(*object.String)
+
+	switch operator {
+	case "==":
+		return nativeBoolToBooleanObject(l.Value == r.Value)
+	case "!=":
+		return nativeBoolToBooleanObject(l.Value != r.Value)
+	case ">=":
+		return nativeBoolToBooleanObject(l.Value >= r.Value)
+	case ">":
+		return nativeBoolToBooleanObject(l.Value > r.Value)
+	case "<=":
+		return nativeBoolToBooleanObject(l.Value <= r.Value)
+	case "<":
+		return nativeBoolToBooleanObject(l.Value < r.Value)
+	case "+":
+		return &object.String{Value: l.Value + r.Value}
+	case "+=":
+		return &object.String{Value: l.Value + r.Value}
+	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
-
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-	return &object.String{Value: leftVal + rightVal}
 }
 
 func evalBangOperatorExpression(right object.Object) object.Object {
@@ -488,12 +543,14 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 }
 
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
-	if right.Type() != object.INTEGER_OBJ {
+	switch obj := right.(type) {
+	case *object.Integer:
+		return &object.Integer{Value: -obj.Value}
+	case *object.Float:
+		return &object.Float{Value: -obj.Value}
+	default:
 		return newError("unknown operator: -%s", right.Type())
 	}
-
-	value := right.(*object.Integer).Value
-	return &object.Integer{Value: -value}
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {

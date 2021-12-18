@@ -13,17 +13,24 @@ const (
 	STRING = "STRING"
 
 	// Operators
-	ASSIGN       = "="
-	PLUS         = "+"
-	PLUS_EQUALS  = "+="
-	MINUS        = "-"
-	MINUS_EQUALS = "-="
-	ASTERISK     = "*"
-	SLASH        = "/"
-	BANG         = "!"
+	ASSIGN = "="
+	BANG   = "!"
+	POW    = "**"
+
+	PLUS     = "+"
+	MINUS    = "-"
+	ASTERISK = "*"
+	SLASH    = "/"
+
+	PLUS_EQUALS     = "+="
+	MINUS_EQUALS    = "-="
+	ASTERISK_EQUALS = "*="
+	SLASH_EQUALS    = "/="
 
 	LT = "<"
+	LE = "<="
 	GT = ">"
+	GE = ">="
 
 	EQ     = "=="
 	NOT_EQ = "!="
@@ -45,6 +52,7 @@ const (
 	LET      = "LET"
 	TRUE     = "TRUE"
 	FALSE    = "FALSE"
+	NULL     = "null"
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
@@ -61,6 +69,7 @@ var keywords = map[string]TokenType{
 	"let":    LET,
 	"true":   TRUE,
 	"false":  FALSE,
+	"null":   NULL,
 	"if":     IF,
 	"else":   ELSE,
 	"return": RETURN,

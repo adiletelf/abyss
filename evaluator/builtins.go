@@ -3,6 +3,8 @@ package evaluator
 import (
 	"fmt"
 	"github.com/adiletelf/abyss/object"
+	"math"
+	"math/rand"
 )
 
 var builtins = map[string]*object.Builtin{
@@ -102,8 +104,54 @@ var builtins = map[string]*object.Builtin{
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
 			}
-
 			return NULL
+		},
+	},
+	"abs": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments, got=%d, want=1", len(args))
+			}
+			switch arg := args[0].(type) {
+			case *object.Integer:
+				v := arg.Value
+				if v < 0 {
+					v = v * -1
+				}
+				return &object.Integer{Value: v}
+			case *object.Float:
+				v := arg.Value
+				if v < 0 {
+					v = v * -1
+				}
+				return &object.Float{Value: v}
+			default:
+				return newError("argument to 'abs' not supported, got=%s", arg.Type())
+			}
+		},
+	},
+	"random": {
+		Fn: func(args ...object.Object) object.Object {
+			return &object.Float{Value: rand.Float64()}
+		},
+	},
+	"sqrt": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments. got=%d, want=1",
+					len(args))
+			}
+			switch arg := args[0].(type) {
+			case *object.Integer:
+				v := arg.Value
+				return &object.Float{Value: math.Sqrt(float64(v))}
+			case *object.Float:
+				v := arg.Value
+				return &object.Float{Value: math.Sqrt(v)}
+			default:
+				return newError("argument to `math.sqrt` not supported, got=%s",
+					args[0].Type())
+			}
 		},
 	},
 }

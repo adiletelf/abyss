@@ -16,25 +16,35 @@ const (
 	LESSGREATER // > or <
 	SUM         // +
 	PRODUCT     // *
+	POWER       // **
 	PREFIX      // -X or !X
 	CALL        // myFunction(X)
 	INDEX       // array[index]
 )
 
 var precedences = map[token.TokenType]int{
-	token.ASSIGN:       ASSIGN,
-	token.EQ:           EQUALS,
-	token.NOT_EQ:       EQUALS,
-	token.LT:           LESSGREATER,
-	token.GT:           LESSGREATER,
+	token.ASSIGN: ASSIGN,
+
+	token.EQ:     EQUALS,
+	token.NOT_EQ: EQUALS,
+	token.LT:     LESSGREATER,
+	token.LE:     LESSGREATER,
+	token.GT:     LESSGREATER,
+	token.GE:     LESSGREATER,
+
 	token.PLUS:         SUM,
-	token.PLUS_EQUALS:  SUM,
 	token.MINUS:        SUM,
+	token.PLUS_EQUALS:  SUM,
 	token.MINUS_EQUALS: SUM,
-	token.SLASH:        PRODUCT,
-	token.ASTERISK:     PRODUCT,
-	token.LPAREN:       CALL,
-	token.LBRACKET:     INDEX,
+
+	token.ASTERISK:        PRODUCT,
+	token.ASTERISK_EQUALS: PRODUCT,
+	token.SLASH:           PRODUCT,
+	token.SLASH_EQUALS:    PRODUCT,
+	token.POW:             POWER,
+
+	token.LPAREN:   CALL,
+	token.LBRACKET: INDEX,
 }
 
 type (
@@ -59,34 +69,55 @@ func New(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
+	//
+	// Prefix
+	//
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.EOF, p.parseBroken)
+	p.registerPrefix(token.ILLEGAL, p.parseBroken)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
+	p.registerPrefix(token.NULL, p.parseNull)
+
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
+
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FOR, p.parseForLoopExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 
+	//
+	// Infix
+	//
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.ASSIGN, p.parseAssignExpression)
+
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
-	p.registerInfix(token.PLUS_EQUALS, p.parseAssignExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
-	p.registerInfix(token.MINUS_EQUALS, p.parseAssignExpression)
-	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
+	p.registerInfix(token.SLASH, p.parseInfixExpression)
+	p.registerInfix(token.POW, p.parseInfixExpression)
+
+	p.registerInfix(token.PLUS_EQUALS, p.parseAssignExpression)
+	p.registerInfix(token.MINUS_EQUALS, p.parseAssignExpression)
+	p.registerInfix(token.ASTERISK_EQUALS, p.parseAssignExpression)
+	p.registerInfix(token.SLASH_EQUALS, p.parseAssignExpression)
+
 	p.registerInfix(token.EQ, p.parseInfixExpression)
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
+	p.registerInfix(token.LE, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.GE, p.parseInfixExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -236,6 +267,12 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
+// parseBroken is hit if we see an EOF in our input-stream
+// this means we're screwed
+func (p *Parser) parseBroken() ast.Expression {
+	return nil
+}
+
 // parseAssignExpression parses a bare assignment, without a `let`.
 func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
 	stmt := &ast.AssignStatement{Token: p.curToken}
@@ -265,6 +302,10 @@ func (p *Parser) parseAssignExpression(name ast.Expression) ast.Expression {
 		stmt.Operator = "+="
 	case token.MINUS_EQUALS:
 		stmt.Operator = "-="
+	case token.ASTERISK_EQUALS:
+		stmt.Operator = "*="
+	case token.SLASH_EQUALS:
+		stmt.Operator = "/="
 	default:
 		stmt.Operator = "="
 	}
@@ -412,6 +453,10 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
+func (p *Parser) parseNull() ast.Expression {
+	return &ast.NullLiteral{Token: p.curToken}
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
