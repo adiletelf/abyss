@@ -77,10 +77,6 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			tok = token.Token{Type: token.ASTERISK_EQUALS, Literal: string(ch) + string(l.ch)}
-		} else if string(l.peekChar()) == "*" {
-			ch := l.ch
-			l.readChar()
-			tok = token.Token{Type: token.POW, Literal: string(ch) + string(l.ch)}
 		} else {
 			tok = newToken(token.ASTERISK, l.ch)
 		}

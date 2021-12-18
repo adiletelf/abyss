@@ -8,7 +8,7 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"len": {
+	"len": { // len(arr) | len(string)
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments, got=%d, want=1", len(args))
@@ -24,7 +24,7 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
-	"first": {
+	"first": { // first(arr) -> first element of array
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments, got=%d, want=1", len(args))
@@ -42,7 +42,7 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"last": {
+	"last": { // last(arr) -> last element of array
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments, got=%d, want=1", len(args))
@@ -60,7 +60,7 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"tail": {
+	"tail": { // tail(arr) -> new array except first element
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments, got=%d, want=1", len(args))
@@ -80,7 +80,7 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"push": {
+	"push": { // push(arr, value)
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments, got=%d, want=2", len(args))
@@ -99,7 +99,7 @@ var builtins = map[string]*object.Builtin{
 			return &object.Array{Elements: newElements}
 		},
 	},
-	"print": {
+	"print": { // prints every argument, returns null
 		Fn: func(args ...object.Object) object.Object {
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
@@ -107,7 +107,7 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
-	"abs": {
+	"abs": { // abs(value: INT | FLOAT)
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments, got=%d, want=1", len(args))
@@ -130,12 +130,45 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
-	"random": {
+	"pow": { // pow(base: INT|FLOAT, exp: INT|FLOAT)
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("wrong number of arguments, got=%d, want=2", len(args))
+			}
+
+			first := args[0]
+			second := args[1]
+			if first.Type() != object.INTEGER_OBJ && first.Type() != object.FLOAT_OBJ {
+				return newError("first argument to `pow` is not INT | FLOAT, got=%s", first.Type())
+			}
+			if second.Type() != object.INTEGER_OBJ && second.Type() != object.FLOAT_OBJ {
+				return newError("second argument to `pow` is not INT | FLOAT, got=%s", second.Type())
+			}
+
+			var base, exp float64
+			switch f := first.(type) {
+			case *object.Integer:
+				base = float64(f.Value)
+			case *object.Float:
+				base = f.Value
+			}
+
+			switch s := second.(type) {
+			case *object.Integer:
+				exp = float64(s.Value)
+			case *object.Float:
+				exp = s.Value
+			}
+
+			return &object.Float{Value: math.Pow(base, exp)}
+		},
+	},
+	"random": { // random() -> random FLOAT in [0.0, 1.0)
 		Fn: func(args ...object.Object) object.Object {
 			return &object.Float{Value: rand.Float64()}
 		},
 	},
-	"sqrt": {
+	"sqrt": { // sqrt(value: INT | FLOAT)
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
 				return newError("wrong number of arguments. got=%d, want=1",
@@ -154,7 +187,7 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
-	"array": {
+	"array": { // array(size, defaultValue: INT | FLOAT)
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments, got=%d, want=2", len(args))
@@ -187,7 +220,7 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
-	"range": {
+	"range": { // range(min, max) -> returns array with elements from min to max
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 {
 				return newError("wrong number of arguments, got=%d, want 2", len(args))

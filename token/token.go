@@ -15,7 +15,6 @@ const (
 	// Operators
 	ASSIGN = "="
 	BANG   = "!"
-	POW    = "**"
 
 	PLUS     = "+"
 	MINUS    = "-"

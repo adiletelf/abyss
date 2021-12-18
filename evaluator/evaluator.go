@@ -2,7 +2,6 @@ package evaluator
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/adiletelf/abyss/ast"
 	"github.com/adiletelf/abyss/object"
@@ -354,8 +353,6 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/=":
 		return &object.Integer{Value: leftVal / rightVal}
-	case "**":
-		return &object.Integer{Value: int64(math.Pow(float64(leftVal), float64(rightVal)))}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -403,8 +400,6 @@ func evalIntegerFloatInfixExpression(operator string, left, right object.Object)
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
-	case "**":
-		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -443,8 +438,6 @@ func evalFloatInfixExpression(operator string, left, right object.Object) object
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
-	case "**":
-		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
@@ -483,8 +476,6 @@ func evalFloatIntegerInfixExpression(operator string, left, right object.Object)
 		return &object.Float{Value: leftVal / rightVal}
 	case "/=":
 		return &object.Float{Value: leftVal / rightVal}
-	case "**":
-		return &object.Float{Value: math.Pow(leftVal, rightVal)}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
 	case "<=":
