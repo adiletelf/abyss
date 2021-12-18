@@ -116,13 +116,13 @@ var builtins = map[string]*object.Builtin{
 			case *object.Integer:
 				v := arg.Value
 				if v < 0 {
-					v = v * -1
+					v *= -1
 				}
 				return &object.Integer{Value: v}
 			case *object.Float:
 				v := arg.Value
 				if v < 0 {
-					v = v * -1
+					v *= -1
 				}
 				return &object.Float{Value: v}
 			default:
@@ -149,9 +149,79 @@ var builtins = map[string]*object.Builtin{
 				v := arg.Value
 				return &object.Float{Value: math.Sqrt(v)}
 			default:
-				return newError("argument to `math.sqrt` not supported, got=%s",
+				return newError("argument to `sqrt` not supported, got=%s",
 					args[0].Type())
 			}
+		},
+	},
+	"array": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("wrong number of arguments, got=%d, want=2", len(args))
+			}
+
+			if args[0].Type() != object.INTEGER_OBJ {
+				return newError("first argument (size) to `array` must be INT, got=%s", args[0].Type())
+			}
+			size := args[0].(*object.Integer).Value
+
+			switch defaultValue := args[1].(type) {
+			case *object.Integer:
+				array := make([]object.Object, size)
+
+				var i int64
+				for i = 0; i < size; i++ {
+					array[i] = &object.Integer{Value: defaultValue.Value}
+				}
+				return &object.Array{Elements: array}
+			case *object.Float:
+				array := make([]object.Object, size)
+
+				var i int64
+				for i = 0; i < size; i++ {
+					array[i] = &object.Float{Value: defaultValue.Value}
+				}
+				return &object.Array{Elements: array}
+			default:
+				return newError("second argument to `array` not supported, got=%s", args[1].Type())
+			}
+		},
+	},
+	"range": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 2 {
+				return newError("wrong number of arguments, got=%d, want 2", len(args))
+			}
+
+			if args[0].Type() != object.INTEGER_OBJ || args[1].Type() != object.INTEGER_OBJ {
+				return newError("wrong types of arguments to `range`, got=(%s, %s), want=(INT, INT)",
+					args[0].Type(), args[1].Type())
+			}
+
+			min := args[0].(*object.Integer).Value
+			max := args[1].(*object.Integer).Value
+			size := int(max - min)
+			if size < 0 {
+				size *= -1
+			}
+
+			if size == 0 {
+				return &object.Array{}
+			}
+
+			array := make([]object.Object, size)
+			for i := 0; i < size; i++ {
+				array[i] = &object.Integer{Value: min}
+				if min < max {
+					// range(0,4) -> [0, 1, 2, 3]
+					min++
+				} else {
+					// range(4,0) -> [4, 3, 2, 1]
+					min--
+				}
+			}
+
+			return &object.Array{Elements: array}
 		},
 	},
 }

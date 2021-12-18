@@ -12,14 +12,14 @@ const (
 	_ int = iota
 	LOWEST
 	ASSIGN      // =
-	EQUALS      // ==
+	EQUALS      // == or !=
 	LESSGREATER // > or <
-	SUM         // +
-	PRODUCT     // *
+	SUM         // + or -
+	PRODUCT     // * or /
 	POWER       // **
 	PREFIX      // -X or !X
 	CALL        // myFunction(X)
-	INDEX       // array[index]
+	INDEX       // array[index], map[index]
 )
 
 var precedences = map[token.TokenType]int{
@@ -92,7 +92,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 
 	p.registerPrefix(token.IF, p.parseIfExpression)
-	p.registerPrefix(token.FOR, p.parseForLoopExpression)
+	p.registerPrefix(token.WHILE, p.parseWhileExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 
 	//
@@ -504,9 +504,9 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	return expression
 }
 
-// parseForLoopExpression parses a for-loop.
-func (p *Parser) parseForLoopExpression() ast.Expression {
-	expression := &ast.ForLoopExpression{Token: p.curToken}
+// parseWhileExpression parses a for-loop.
+func (p *Parser) parseWhileExpression() ast.Expression {
+	expression := &ast.WhileExpression{Token: p.curToken}
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}

@@ -268,8 +268,8 @@ func (ie *IfExpression) String() string {
 	return out.String()
 }
 
-// ForLoopExpression holds a for-loop
-type ForLoopExpression struct {
+// WhileExpression holds a for-loop
+type WhileExpression struct {
 	// Token is the actual token
 	Token token.Token
 
@@ -282,19 +282,19 @@ type ForLoopExpression struct {
 	Consequence *BlockStatement
 }
 
-func (fle *ForLoopExpression) expressionNode() {}
+func (we *WhileExpression) expressionNode() {}
 
 // TokenLiteral returns the literal token.
-func (fle *ForLoopExpression) TokenLiteral() string { return fle.Token.Literal }
+func (we *WhileExpression) TokenLiteral() string { return we.Token.Literal }
 
 // String returns this object as a string.
-func (fle *ForLoopExpression) String() string {
+func (we *WhileExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("for (")
-	out.WriteString(fle.Condition.String())
+	out.WriteString("while (")
+	out.WriteString(we.Condition.String())
 	out.WriteString(" ) {")
-	out.WriteString(fle.Consequence.String())
+	out.WriteString(we.Consequence.String())
 	out.WriteString("}")
 
 	return out.String()
