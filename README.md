@@ -132,9 +132,9 @@ let complex = {
 	"sub": fn(x, y) { x - y },
 	"other": [1, 2, 3, 4]
 }
-print(complex["add"](1, 2)(3))
-print(complex["sub"](1, 2))
-print(complex["other"][2])
+print(complex["add"](1, 2)(3)) // 6
+print(complex["sub"](1, 2))    // -1
+print(complex["other"][2])     // 3
 ```
 
 #### Map
