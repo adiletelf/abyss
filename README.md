@@ -3,11 +3,9 @@
 ## Содержание
 =============
 
-
 ## Описание
 Abyss is a toy language interpreter, written in Go. It has C-style syntax, and is largely inspired by Ruby, Python, Perl and C#  
 It support the normal control flow and functional programming.
-
 
 ## Использование
 Чтобы запустить REPL, просто введите следующую команду:
@@ -60,7 +58,7 @@ let c = true;
 * while
 * return
 
-## Преобразование типов TODO
+### Преобразование типов TODO
 
 Вы можете использовать встроенные функции для преобразования типов переменных
 
@@ -69,7 +67,7 @@ let c = true;
 * str()
 * bool()
 
-## Управляющая логика
+### Управляющая логика
 
 Условия в Abyss являются выражениями, поэтому их можно присвоить переменным.
 `let result = if (10 > 5) { true } else { false };`
@@ -95,14 +93,14 @@ while (i < 10) {
 }
 ```
 
-## Встроенные операторы
+### Встроенные операторы
 
 * Операторы сравнения: `<`, `<=`, `>`, `>=`, `==`, `!=`
 * Унарные: `!`, `-`
 * Арифметические: `+`, `-`, `*`, `/`
 * Присваивания: `=`, `+=`, `-=`, `*=`, `/=`
 
-## Функции
+### Функции
 
 В Abyss функции - это функции первого класса.  
 Это означает, что язык поддерживает передачу функций в качестве аргументов другим функциям,  
@@ -125,7 +123,7 @@ print(complex["sub"](1, 2))
 print(complex["other"][2])
 ```
 
-### Map
+#### Map
 
 ```swift
 let map = fn(arr, f) {
@@ -147,7 +145,7 @@ print(map(a, double));
 
 Результат: `[2, 4, 6, 8]`
 
-### Reduce
+#### Reduce
 
 ```swift
 let reduce = fn(arr, initial, f) {
@@ -170,7 +168,7 @@ print(sum([1, 2, 3, 4, 5]));
 
 Результат: `15`
 
-## Встроенные функции
+### Встроенные функции
 * `len(arr)` | `len(str)` -> вычисляет длину
 * `first(arr)`			  -> возвращает первый элемент массива
 * `tail(arr)`		      -> возвращает массив, без первого элемента
@@ -183,13 +181,4 @@ print(sum([1, 2, 3, 4, 5]));
 * `pow(base, exp)`		  -> возводит **base** в степень **exp**. Возвращает **float**
 * `random()`			  -> рандомное вещественное число в интервале `[0.0, 1.0]`
 * `sqrt(value)`           -> квадратный корень числа
-
-*Everything* else is an expression.
-Statements:  
-1. Let statement: `let x = 10;`  
-2. Return statement: `return x;`  
-
-
-### If-Expression:  
-`let result = if (10 > 5) { true } else { false };`
 
