@@ -3,6 +3,7 @@ package evaluator
 import (
 	"fmt"
 	"github.com/adiletelf/abyss/object"
+	"io/ioutil"
 	"math"
 	"math/rand"
 )
@@ -255,6 +256,44 @@ var builtins = map[string]*object.Builtin{
 				return newError("argument to `sqrt` not supported, got=%s",
 					args[0].Type())
 			}
+		},
+	},
+	"open": { // read file as string
+		Fn: func(args ...object.Object) object.Object {
+			path := ""
+
+			// We need at least one arg
+			if len(args) < 1 {
+				return newError("wrong number of arguments. got=%d, want=1+", len(args))
+			}
+
+			// Get the filename
+			switch args[0].(type) {
+			case *object.String:
+				path = args[0].(*object.String).Value
+			default:
+				return newError("argument to `file` not supported, got=%s", args[0].Type())
+
+			}
+
+			// Create the object
+			content, err := ioutil.ReadFile(path)
+			if err != nil {
+				return newError(err.Error())
+			}
+
+			text := string(content)
+			return &object.String{Value: text}
+		},
+	},
+	"type": { // return type of object as string
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments to `type`, got=%d, want=1")
+			}
+
+			arg := args[0]
+			return &object.String{Value: string(arg.Type())}
 		},
 	},
 }

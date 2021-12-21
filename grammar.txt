@@ -1,0 +1,95 @@
+Statement : Statements
+		  | LetStatement // let a = 3;
+		  | ReturnStatement // return a;
+		  | ExpressionStatement // 5 + 5;
+		  | AssignStatement // a = 4;
+		  | BlockStatement // { let b = 4; a + b; }
+		  | /* nothing */
+		  ;
+
+Statements : Statement Statements
+		   |
+		   ;
+
+LetStatement : "let" Identifier "=" Expression
+			 ;
+
+ReturnStatement : "return" Expression ";"
+				;
+
+ExpressionStatement : Expression ";"
+					;
+
+AssignStatement : Identifier "=" Expression
+				| Identifier "+=" Expression
+				| Identifier "-=" Expression
+				| Identifier "*=" Expression
+				| Identifier "/=" Expression
+				;
+
+BlockStatement : "{" Statements "}"
+			   ;
+
+Expression : NULLLITERAL
+		   | BOOLEAN
+		   | INTEGERLITERAL
+		   | FLOATLITERAL
+		   | STRINGLITERAL
+		   | Identifier
+		   | HashLiteral
+		   | ArrayLiteral
+		   | IndexExpression
+		   | FunctionLiteral
+		   | CallExpression
+		   | IfExpression
+		   | WhileExpression
+		   | PrefixExpression
+		   | InfixExpression
+		   ;
+
+Expressions : Expression Expressions
+			|
+			;
+
+Identifiers : Identifier Identifiers
+			|
+			;
+
+
+HashLiteral : "{" Pairs "}"
+			;
+
+Pairs : Pair Pairs
+	  |
+	  ;
+
+Pair : Expression ":" Expression
+	 ;
+
+ArrayLiteral : "[" Expressions "]"
+			 ;
+
+IndexExpression : "[" Expression "]"
+				;
+
+FunctionLiteral | "fn" "(" Identifiers ")" "{" BlockStatement "}"
+				;
+
+CallExpression : FunctionLiteral "(" Expressions ")"
+			   ;
+
+IfExpression : "if" "(" Expression ")" BlockStatement
+			 | "if" "(" Expression ")" "{" BlockStatement "}" "else" "{" BlockStatement "}"
+
+WhileExpression : "while" "(" Expression ")" "{" BlockStatement "}"
+				;
+
+PrefixExpression : PrefixLiteral Expression 
+				 ;
+
+PrefixLiteral : "!" | "-" ;
+
+InfixExpression: Expression InfixLiteral Expression
+			   ;
+
+InfixLiteral : "+" | "-" | "*" | "/" ;
